@@ -132,7 +132,7 @@ class olcEngine3D : public olc::PixelGameEngine
 public:
 	olcEngine3D()
 	{
-		sAppName = "3D Demo";
+		sAppName = "3D World Demo Using SIMD";
 	}
 
 
@@ -680,7 +680,7 @@ public:
 int main()
 {
 	olcEngine3D demo;
-	if (demo.Construct(720, 480, 2, 2, true))
+	if (demo.Construct(720, 480, 2, 2, false))
 		demo.Start();
 	return 0;
 }
