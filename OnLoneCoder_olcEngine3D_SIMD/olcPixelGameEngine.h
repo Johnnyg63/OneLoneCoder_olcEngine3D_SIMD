@@ -476,6 +476,10 @@ int main()
 #include <array>
 #include <cstring>
 #include <intrin.h> // John Galvin
+#if defined (_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC)
+#include <arm64_neon.h> // John Galvin ARM NEON Advance SIMD Support
+#endif  /* defined (_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) */
+
 #pragma endregion
 
 #define PGE_VER 223
@@ -6344,11 +6348,14 @@ namespace X11
 				return;
 			}
 
+			// Crop line to fit within draw target
 			ny = (ny < 0) ? 0 : ny;
+			sx = (sx < 0) ? 0 : sx;
+			ex = (ex > GetDrawTarget()->width) ? ex = GetDrawTarget()->width : ex;
 
 			int i = 0;
 			int* pTargetVector = (int*)pDrawTarget->pColData.data();
-			size_t nTarVecLength = pDrawTarget->pColData.size();
+			size_t nTargetLength = pDrawTarget->pColData.size();
 
 			int nVecA = (ny * GetDrawTargetWidth()) + sx;
 			pTargetVector += nVecA;
@@ -6363,8 +6370,7 @@ namespace X11
 
 			for (i = sx; i <= ex; i += 4, pTargetVector += 4, nVecA += 4)
 			{
-				if (nVecA > nTarVecLength) break;
-
+				if (nVecA > nTargetLength) break;
 				_sx = _mm_set_epi32(i + 3, i + 2, i + 1, i);
 				// Take note there is 'no less than or equals', but if you just revverse the operands and use 'greater than'
 				// you get the excat same affect
@@ -6379,18 +6385,21 @@ namespace X11
 
 		void PixelGameEngine::DrawFillLine_AVX256(int sx, int ex, int ny, Pixel p)
 		{
-			
+
 			if (pDrawTarget == nullptr)
 			{
 				return;
 			}
 
+			// Crop line to fit within draw target
 			ny = (ny < 0) ? 0 : ny;
+			sx = (sx < 0) ? 0 : sx;
+			ex = (ex > GetDrawTarget()->width) ? ex = GetDrawTarget()->width : ex;
 
 			int i = 0;
 			int* pTargetVector = (int*)pDrawTarget->pColData.data();
-			size_t nTarVecLength = pDrawTarget->pColData.size();
-			
+			size_t nTargetLength = pDrawTarget->pColData.size();
+
 			int nVecA = (ny * GetDrawTargetWidth()) + sx;
 			pTargetVector += nVecA;
 
@@ -6405,7 +6414,7 @@ namespace X11
 
 			for (i = sx; i <= ex; i += 8, pTargetVector += 8, nVecA += 8)
 			{
-				if (nVecA > nTarVecLength) break;
+				if (nVecA > nTargetLength) break;
 				_sx = _mm256_set_epi32(i + 7, i + 6, i + 5, i + 4, i + 3, i + 2, i + 1, i);
 				// Take note there is 'no less than or equals', but if you just revverse the operands and use 'greater than'
 				// you get the excat same affect
@@ -6427,11 +6436,14 @@ namespace X11
 				return;
 			}
 
+			// Crop line to fit within draw target
 			ny = (ny < 0) ? 0 : ny;
+			sx = (sx < 0) ? 0 : sx;
+			ex = (ex > GetDrawTarget()->width) ? ex = GetDrawTarget()->width : ex;
 
 			int i = 0;
 			int* pTargetVector = (int*)pDrawTarget->pColData.data();
-			size_t nTarVecLength = pDrawTarget->pColData.size();
+			size_t nTargetLength = pDrawTarget->pColData.size();
 
 			int nVecA = (ny * GetDrawTargetWidth()) + sx;
 			pTargetVector += nVecA;
@@ -6444,9 +6456,9 @@ namespace X11
 			_sx = _mm512_set1_epi32(sx);
 			_ex = _mm512_set1_epi32(ex);
 
-			for (i = sx; i <= ex; i += 16, pTargetVector += 16, nVecA += 16)
+			for (i = sx; i <= ex; i += 16, pTargetVector += 16)
 			{
-				if (nVecA > nTarVecLength) break;
+				if (nVecA > nTargetLength) break;
 				_sx = _mm512_set_epi32(i + 15, i + 14, i + 13, i + 12, i + 11, i + 10, i + 9, i + 8, i + 7, i + 6, i + 5, i + 4, i + 3, i + 2, i + 1, i);
 
 				_mm512_mask_store_epi32(pTargetVector, _mm512_cmpge_epi32_mask(_ex, _sx), _setpixel);
@@ -10427,8 +10439,8 @@ namespace X11
 						break;
 					}
 
-					if (mapKeys[key])
-						ptrPGE->olc_UpdateKeyState(mapKeys[key], true);
+				if (mapKeys[key])
+					ptrPGE->olc_UpdateKeyState(mapKeys[key], true);
 					});
 
 				glutKeyboardUpFunc([](unsigned char key, int x, int y) -> void {
@@ -10449,19 +10461,19 @@ namespace X11
 						break;
 					}
 
-					if (mapKeys[key])
-						ptrPGE->olc_UpdateKeyState(mapKeys[key], false);
+				if (mapKeys[key])
+					ptrPGE->olc_UpdateKeyState(mapKeys[key], false);
 					});
 
 				//Special keys
 				glutSpecialFunc([](int key, int x, int y) -> void {
 					if (mapKeys[key])
-						ptrPGE->olc_UpdateKeyState(mapKeys[key], true);
+					ptrPGE->olc_UpdateKeyState(mapKeys[key], true);
 					});
 
 				glutSpecialUpFunc([](int key, int x, int y) -> void {
 					if (mapKeys[key])
-						ptrPGE->olc_UpdateKeyState(mapKeys[key], false);
+					ptrPGE->olc_UpdateKeyState(mapKeys[key], false);
 					});
 
 				glutMouseFunc([](int button, int state, int x, int y) -> void {
